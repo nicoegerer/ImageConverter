@@ -1,0 +1,31 @@
+name: Funktionswunsch
+description: Eine konkrete Verbesserung vorschlagen
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Welches Problem soll gelöst werden?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Gewünschte Lösung
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Betrachtete Alternativen
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Bedeutung für den Workflow
+      options:
+        - Komfortverbesserung
+        - Häufig benötigte Funktion
+        - Blockiert einen Arbeitsablauf
+    validations:
+      required: true

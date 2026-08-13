@@ -1,0 +1,40 @@
+# Build output
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Local recovery and diagnostics
+.recovery/
+Cache/
+Logs/
+Diagnostics/
+settings.json
+*.log
+*-Diagnostic.txt
+
+# IDE and user-specific files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet and publish leftovers
+packages/
+*.nupkg
+*.snupkg
+publish/
+
+# Installer output
+installer/Output/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store

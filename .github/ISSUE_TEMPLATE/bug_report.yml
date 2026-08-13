@@ -1,0 +1,71 @@
+name: Fehlerbericht
+description: Einen reproduzierbaren Fehler melden
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Danke für den Bericht. Bitte keine privaten Bilder oder persönlichen Pfade hochladen.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: z. B. 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows-Version
+      placeholder: z. B. Windows 11 24H2, Build 26100
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Bereich
+      options:
+        - Import / HEIC / HEIF
+        - Crop / Zoom
+        - Resize / Convert
+        - Batch-Export
+        - Rename
+        - Darstellung / Theme
+        - Installation / Start
+        - Sonstiges
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Schritte zum Reproduzieren
+      placeholder: Eine möglichst kurze, nummerierte Abfolge
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Erwartetes Verhalten
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Tatsächliches Verhalten
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Anonymisierte Diagnose
+      description: Relevanten Inhalt aus dem Diagnosebericht einfügen; persönliche Pfade vorher entfernen.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Prüfung
+      options:
+        - label: Ich habe keine privaten Bilder, Zugangsdaten oder personenbezogenen Pfade angehängt.
+          required: true
+        - label: Ich habe nach einem bereits vorhandenen Issue gesucht.
+          required: true

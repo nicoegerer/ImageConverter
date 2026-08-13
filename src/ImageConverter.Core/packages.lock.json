@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net8.0": {
+      "Magick.NET-Q8-x64": {
+        "type": "Direct",
+        "requested": "[14.16.0, )",
+        "resolved": "14.16.0",
+        "contentHash": "ORq25EHxJzfl58RvmJct3ODyKhu7af0KPZKwGKuNBDduFB53O6oxQK5bU0nQiPLR0KkGqlOqy3oNJzy/3prutw==",
+        "dependencies": {
+          "Magick.NET.Core": "14.16.0"
+        }
+      },
+      "Magick.NET.Core": {
+        "type": "Transitive",
+        "resolved": "14.16.0",
+        "contentHash": "ddBX/Zb0sCsX4agqHdHeqUx+grfw8I7GFU+lgut3mtNl7roxbxemSQFGLIJXtzwPuAHxbaMtkXA+ijVl02EUhQ=="
+      }
+    }
+  }
+}
