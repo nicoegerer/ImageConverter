@@ -1041,7 +1041,7 @@ public sealed partial class MainWindow : Window
 
     private static Version CurrentVersion()
     {
-        return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 1, 0);
+        return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 1, 1);
     }
 
     private void OnOpenLogsClick(object sender, RoutedEventArgs e)

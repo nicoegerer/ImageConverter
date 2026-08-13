@@ -6,6 +6,14 @@ und die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-08-13
+
+### Changed
+
+- Herstellerangabe in Anwendung und Installer auf Nico Egerer vereinheitlicht
+- Repository-, Support- und Updateadressen in die Installer-Metadaten aufgenommen
+- Produktbeschreibung, Copyright und Versionsinformationen vervollständigt
+
 ## [1.1.0] - 2026-08-13
 
 ### Added

@@ -70,13 +70,13 @@ dotnet test tests/ImageConverter.Core.Tests/ImageConverter.Core.Tests.csproj `
 Ein vollständiger lokaler Release-Build:
 
 ```powershell
-.\scripts\build-release.ps1 -Version 1.1.0
+.\scripts\build-release.ps1 -Version 1.1.1
 ```
 
 Ohne lokal installiertes Inno Setup:
 
 ```powershell
-.\scripts\build-release.ps1 -Version 1.1.0 -SkipInstaller
+.\scripts\build-release.ps1 -Version 1.1.1 -SkipInstaller
 ```
 
 Build-Logs werden bewusst unter `%TEMP%` abgelegt und nicht als Publish-Inhalt
