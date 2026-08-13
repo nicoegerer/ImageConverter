@@ -1,20 +1,35 @@
 #ifndef MyAppVersion
-  #define MyAppVersion "1.1.0"
+  #define MyAppVersion "1.1.1"
 #endif
 
 #define MyAppName "Image Converter"
 #define MyAppExeName "ImageConverter.exe"
-#define MyAppPublisher "Image Converter contributors"
+#define MyAppPublisher "Nico Egerer"
+#define MyAppURL "https://github.com/nicoegerer/ImageConverter"
+#define MyAppSupportURL "https://github.com/nicoegerer/ImageConverter/issues"
+#define MyAppUpdatesURL "https://github.com/nicoegerer/ImageConverter/releases/latest"
+#define MyAppCopyright "Copyright (c) 2026 Nico Egerer"
 
 [Setup]
 AppId={{7D6DDF2B-464A-42EC-BC40-54873F41029D}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
+AppPublisherURL={#MyAppURL}
+AppSupportURL={#MyAppSupportURL}
+AppUpdatesURL={#MyAppUpdatesURL}
+AppContact={#MyAppSupportURL}
+AppComments=Open-Source-Bildkonverter für Windows. Offizieller Quellcode und Veröffentlichungen: {#MyAppURL}
+AppCopyright={#MyAppCopyright}
 VersionInfoVersion={#MyAppVersion}
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription={#MyAppName} Setup
 VersionInfoProductName={#MyAppName}
+VersionInfoProductVersion={#MyAppVersion}
+VersionInfoTextVersion={#MyAppVersion}
+VersionInfoProductTextVersion={#MyAppVersion}
+VersionInfoCopyright={#MyAppCopyright}
+VersionInfoOriginalFileName=ImageConverter-Setup.exe
 DefaultDirName={localappdata}\Programs\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
