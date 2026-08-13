@@ -11,6 +11,9 @@ public sealed class ImageProcessingIntegrationTests
     [InlineData(OutputImageFormat.Jpeg)]
     [InlineData(OutputImageFormat.Png)]
     [InlineData(OutputImageFormat.Avif)]
+    [InlineData(OutputImageFormat.Tiff)]
+    [InlineData(OutputImageFormat.Bmp)]
+    [InlineData(OutputImageFormat.Gif)]
     public async Task CropCover_ExportsExactTargetSize(OutputImageFormat format)
     {
         using var workspace = new TestWorkspace();

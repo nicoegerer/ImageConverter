@@ -23,6 +23,8 @@ public sealed record ExportProfile
 
     public MetadataMode Metadata { get; init; } = MetadataMode.RemoveExif;
 
+    public TransparencyMode Transparency { get; init; } = TransparencyMode.Preserve;
+
     public static IReadOnlyList<ExportProfile> BuiltIn { get; } = new ExportProfile[5]
     {
         new ExportProfile(),
@@ -38,13 +40,13 @@ public sealed record ExportProfile
         },
         new ExportProfile
         {
-            Name = "Original → WebP",
-            Mode = TransformationMode.FormatOnly,
+            Name = "Originalgröße · WebP klein",
+            Mode = TransformationMode.OriginalSize,
             Width = 0,
             Height = 0,
             Format = OutputImageFormat.WebP,
-            Quality = 95,
-            Metadata = MetadataMode.RemoveGps
+            Quality = 82,
+            Metadata = MetadataMode.RemoveAll
         },
         new ExportProfile
         {

@@ -36,6 +36,9 @@ public sealed class ExportPlanService
             OutputImageFormat.Jpeg => ".jpg",
             OutputImageFormat.Png => ".png",
             OutputImageFormat.Avif => ".avif",
+            OutputImageFormat.Tiff => ".tiff",
+            OutputImageFormat.Bmp => ".bmp",
+            OutputImageFormat.Gif => ".gif",
             _ => throw new ArgumentOutOfRangeException("format"),
         };
     }

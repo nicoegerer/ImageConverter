@@ -23,9 +23,9 @@ public sealed class ImageProcessingService(ILoggingService logger)
             magickImage.AutoOrient();
             magickImage.Orientation = OrientationType.TopLeft;
             ApplyGeometry(magickImage, job.Profile, job.Source.Crop);
+            ApplyTransparency(magickImage, job.Profile);
             ApplyMetadata(magickImage, job.Profile.Metadata);
-            magickImage.Quality = (uint)job.Profile.Quality;
-            magickImage.Format = GetMagickFormat(job.Profile.Format);
+            ConfigureEncoding(magickImage, job.Profile);
             cancellationToken.ThrowIfCancellationRequested();
             magickImage.Write(job.TemporaryPath);
             cancellationToken.ThrowIfCancellationRequested();
@@ -46,7 +46,7 @@ public sealed class ImageProcessingService(ILoggingService logger)
         }
     }
 
-    private static void ApplyGeometry(MagickImage image, ExportProfile profile, CropState crop)
+    internal static void ApplyGeometry(MagickImage image, ExportProfile profile, CropState crop)
     {
         switch (profile.Mode)
         {
@@ -103,6 +103,39 @@ public sealed class ImageProcessingService(ILoggingService logger)
                 break;
             default:
                 throw new ArgumentOutOfRangeException("Mode");
+        }
+    }
+
+    internal static void ApplyTransparency(MagickImage image, ExportProfile profile)
+    {
+        bool formatSupportsAlpha = profile.Format is OutputImageFormat.WebP
+            or OutputImageFormat.Png
+            or OutputImageFormat.Avif
+            or OutputImageFormat.Tiff
+            or OutputImageFormat.Gif;
+        if (profile.Transparency == TransparencyMode.Preserve && formatSupportsAlpha)
+        {
+            return;
+        }
+
+        image.BackgroundColor = profile.Transparency == TransparencyMode.Black
+            ? MagickColors.Black
+            : MagickColors.White;
+        image.Alpha(AlphaOption.Remove);
+    }
+
+    internal static void ConfigureEncoding(MagickImage image, ExportProfile profile)
+    {
+        image.Quality = (uint)profile.Quality;
+        image.Format = GetMagickFormat(profile.Format);
+        if (profile.Format == OutputImageFormat.WebP)
+        {
+            // Method 6 searches more encoding possibilities than ImageMagick's default.
+            image.Settings.SetDefine(MagickFormat.WebP, "method", 6);
+            image.Settings.SetDefine(MagickFormat.WebP, "auto-filter", true);
+            image.Settings.SetDefine(MagickFormat.WebP, "sns-strength", 80);
+            image.Settings.SetDefine(MagickFormat.WebP, "filter-sharpness", 3);
+            image.Settings.SetDefine(MagickFormat.WebP, "filter-strength", 30);
         }
     }
 
@@ -165,7 +198,7 @@ public sealed class ImageProcessingService(ILoggingService logger)
         }
     }
 
-    private static MagickFormat GetMagickFormat(OutputImageFormat format)
+    internal static MagickFormat GetMagickFormat(OutputImageFormat format)
     {
         return format switch
         {
@@ -173,6 +206,9 @@ public sealed class ImageProcessingService(ILoggingService logger)
             OutputImageFormat.Jpeg => MagickFormat.Jpeg,
             OutputImageFormat.Png => MagickFormat.Png,
             OutputImageFormat.Avif => MagickFormat.Avif,
+            OutputImageFormat.Tiff => MagickFormat.Tiff,
+            OutputImageFormat.Bmp => MagickFormat.Bmp,
+            OutputImageFormat.Gif => MagickFormat.Gif,
             _ => throw new ArgumentOutOfRangeException("format"),
         };
     }

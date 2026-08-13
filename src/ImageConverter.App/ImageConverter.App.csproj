@@ -5,6 +5,7 @@
     <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
     <AssemblyName>ImageConverter</AssemblyName>
     <RootNamespace>ImageConverter.App</RootNamespace>
+    <Version>1.1.0</Version>
     <ApplicationTitle>Image Converter</ApplicationTitle>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>

@@ -12,20 +12,20 @@ normalen Betrieb weder ein Benutzerkonto noch eine Internetverbindung.
 
 ## Funktionen
 
-- moderne WinUI-3-Oberfläche mit System-, Light- und Dark-Theme
+- übersichtlicher WinUI-3-Arbeitsbereich mit System-, Light- und Dark-Theme
 - Dateiliste mit Vorschau, Dateiname, Auflösung, Format und Dateigröße
 - JPG/JPEG, PNG, WebP, HEIC/HEIF, AVIF, TIFF/TIF und BMP als Eingabe
-- WebP, JPEG, PNG und AVIF als Ausgabe
-- vier Verarbeitungsarten:
-  - nur Dateiformat ändern
-  - Resize mit beibehaltenem Seitenverhältnis
-  - Fit/Contain ohne Beschnitt
-  - Crop/Cover mit exakter Zielgröße
-- manueller Crop mit abgedunkeltem Außenbereich, Drag, Mausrad, Slider und
-  Tastatursteuerung
+- WebP, JPEG, PNG, AVIF, TIFF, BMP und GIF als Ausgabe
+- klar getrennte Einstellungen für Größe/Zuschnitt, Format/Kompression und Speichern
+- Originalgröße ohne versteckte Preset-Skalierung, proportional einpassen,
+  exakter Crop oder bewusstes Strecken
+- manueller Crop mit acht Ziehpunkten, Drag, Mausrad, Slider sowie
+  Pfeil-/WASD-/R-Tastatursteuerung
 - eigener, dauerhaft gespeicherter Crop-Zustand pro geladenem Bild
 - Presets für Portfolio Card (600 × 1050), Web Hero und Original → WebP
-- Qualitätsregler und Dateigrößen-Schätzung
+- Qualitätsregler, optimierte WebP-Kodierung und testkodierte Dateigrößen-Schätzung
+- wahlweises Behalten von Transparenz oder weißer/schwarzer Hintergrund
+- Export des aktuellen, der ausgewählten oder aller Bilder
 - Batch-Export mit Fortschritt, Einzelergebnissen und Fehlerfortsetzung
 - Export-Namensschema und sichere automatische Kollisionsbehandlung
 - Rename-Vorschau mit Sortierung und zweiphasigem Umbenennen
@@ -33,6 +33,8 @@ normalen Betrieb weder ein Benutzerkonto noch eine Internetverbindung.
 - asynchrone Thumbnail-/Preview-Erzeugung und hochwertige Verarbeitung erst
   beim Export
 - lokale Einstellungen, Diagnoseberichte und technische Logs
+- Wiederherstellung der zuletzt geöffneten Bilder, Auswahl und Zuschnitte
+- integrierte, SHA-256-geprüfte Updates über GitHub Releases
 
 ## Installation für Anwender
 
@@ -41,6 +43,10 @@ die vollständige self-contained Publish-Ausgabe pro Benutzer nach
 `%LOCALAPPDATA%\Programs\Image Converter`, legt einen Startmenü-Eintrag an und
 kann optional eine Desktop-Verknüpfung erstellen. Auf dem Zielrechner werden
 weder .NET noch Visual Studio oder Python benötigt.
+
+Ab Version 1.1 prüft die App auf Wunsch selbst auf neue GitHub-Releases. Ein
+verfügbares Update kann direkt in der App heruntergeladen, per veröffentlichter
+SHA-256-Prüfsumme verifiziert und installiert werden.
 
 > Hinweis: Öffentliche Builds sind erst dann vertrauenswürdig signiert, wenn die
 > Release-Pipeline mit einem Code-Signing-Zertifikat konfiguriert wurde. Die
@@ -64,13 +70,13 @@ dotnet test tests/ImageConverter.Core.Tests/ImageConverter.Core.Tests.csproj `
 Ein vollständiger lokaler Release-Build:
 
 ```powershell
-.\scripts\build-release.ps1 -Version 1.0.0
+.\scripts\build-release.ps1 -Version 1.1.0
 ```
 
 Ohne lokal installiertes Inno Setup:
 
 ```powershell
-.\scripts\build-release.ps1 -Version 1.0.0 -SkipInstaller
+.\scripts\build-release.ps1 -Version 1.1.0 -SkipInstaller
 ```
 
 Build-Logs werden bewusst unter `%TEMP%` abgelegt und nicht als Publish-Inhalt

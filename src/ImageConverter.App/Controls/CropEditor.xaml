@@ -45,6 +45,15 @@
             <Line x:Name="ThirdH1" Stroke="#99FFFFFF" StrokeThickness="1" />
             <Line x:Name="ThirdH2" Stroke="#99FFFFFF" StrokeThickness="1" />
 
+            <Ellipse x:Name="HandleTopLeft" Width="14" Height="14" Fill="White" Stroke="{ThemeResource AppAccentBrush}" StrokeThickness="3" />
+            <Ellipse x:Name="HandleTop" Width="14" Height="14" Fill="White" Stroke="{ThemeResource AppAccentBrush}" StrokeThickness="3" />
+            <Ellipse x:Name="HandleTopRight" Width="14" Height="14" Fill="White" Stroke="{ThemeResource AppAccentBrush}" StrokeThickness="3" />
+            <Ellipse x:Name="HandleRight" Width="14" Height="14" Fill="White" Stroke="{ThemeResource AppAccentBrush}" StrokeThickness="3" />
+            <Ellipse x:Name="HandleBottomRight" Width="14" Height="14" Fill="White" Stroke="{ThemeResource AppAccentBrush}" StrokeThickness="3" />
+            <Ellipse x:Name="HandleBottom" Width="14" Height="14" Fill="White" Stroke="{ThemeResource AppAccentBrush}" StrokeThickness="3" />
+            <Ellipse x:Name="HandleBottomLeft" Width="14" Height="14" Fill="White" Stroke="{ThemeResource AppAccentBrush}" StrokeThickness="3" />
+            <Ellipse x:Name="HandleLeft" Width="14" Height="14" Fill="White" Stroke="{ThemeResource AppAccentBrush}" StrokeThickness="3" />
+
             <Border
                 x:Name="CropLabel"
                 Background="#DD111111"
@@ -88,7 +97,7 @@
             Visibility="Collapsed">
             <TextBlock
                 Foreground="White"
-                Text="Ziehen · Mausrad zum Zoomen · Pfeile / WASD · R zurücksetzen" />
+                Text="Rahmen oder Griffe ziehen · Mausrad · Pfeile / WASD · R zurücksetzen" />
         </Border>
     </Grid>
 </UserControl>

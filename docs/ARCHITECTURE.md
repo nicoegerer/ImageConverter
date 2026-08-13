@@ -34,9 +34,11 @@ erhalten.
 - `ImageLoaderService`: Metadaten lesen und Preview-/Thumbnail-Cache erzeugen
 - `ImageProcessingService`: Crop, Resize, Format, Qualität und Metadaten anwenden
 - `ExportService`: Batch-Jobs planen, parallelisiert ausführen und Fortschritt melden
-- `ExportSizeEstimator`: Ausgabegröße ohne erneutes Encodieren bei jeder UI-Änderung schätzen
+- `ExportSizeEstimator`: sofortige Geometrieschätzung plus entprellte Testkodierung
+  einer verkleinerten Vorschau für einen engeren Dateigrößenbereich
 - `RenameService`: Sortierung, Vorschau, Kollisionserkennung und zweiphasiges Rename
 - `SettingsService`: persistente JSON-Einstellungen
+- `GitHubUpdateService`: Release-Prüfung, Download und SHA-256-Verifikation
 - `LoggingService` und `DiagnosticService`: strukturierte Fehler- und Umgebungsdaten
 - `CapabilityService`: benötigte ImageMagick-Codecs beim Start prüfen
 
@@ -60,7 +62,8 @@ unter `%LOCALAPPDATA%\Image Converter`:
 - `Cache`: wiederverwendbare Thumbnails und Previews
 - `Logs`: technische Laufzeitfehler
 - `Diagnostics`: ausführliche Diagnoseberichte
-- `settings.json`: nicht vertrauliche Benutzereinstellungen
+- `settings.json`: nicht vertrauliche Benutzereinstellungen sowie letzte
+  Bildpfade, Auswahl und normalisierte Crop-Zustände
 
 ## Veröffentlichung
 

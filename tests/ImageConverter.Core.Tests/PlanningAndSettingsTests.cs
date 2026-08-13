@@ -44,6 +44,9 @@ public sealed class PlanningAndSettingsTests
     [InlineData(OutputImageFormat.Jpeg, ".jpg")]
     [InlineData(OutputImageFormat.Png, ".png")]
     [InlineData(OutputImageFormat.Avif, ".avif")]
+    [InlineData(OutputImageFormat.Tiff, ".tiff")]
+    [InlineData(OutputImageFormat.Bmp, ".bmp")]
+    [InlineData(OutputImageFormat.Gif, ".gif")]
     public void GetExtension_ReturnsExpectedExtension(OutputImageFormat format, string expected)
     {
         Assert.Equal(expected, ExportPlanService.GetExtension(format));
@@ -141,7 +144,18 @@ public sealed class PlanningAndSettingsTests
             LastWidth = -20,
             LastHeight = 999999,
             NamingNumberLength = 99,
-            ExportParallelism = 99
+            ExportParallelism = 99,
+            RestoreLastSession = true,
+            SelectedImagePath = workspace.PathFor("photo.jpg"),
+            SessionImages =
+            [
+                new SessionImageState
+                {
+                    Path = workspace.PathFor("photo.jpg"),
+                    Crop = new CropState(-1, -1, 4, 4),
+                    IsSelected = false
+                }
+            ]
         };
 
         await service.SaveAsync(settings);
@@ -153,5 +167,8 @@ public sealed class PlanningAndSettingsTests
         Assert.Equal(32768, loaded.LastHeight);
         Assert.Equal(8, loaded.NamingNumberLength);
         Assert.Equal(4, loaded.ExportParallelism);
+        Assert.True(loaded.RestoreLastSession);
+        Assert.Single(loaded.SessionImages);
+        Assert.Equal(CropState.Full, loaded.SessionImages[0].Crop);
     }
 }

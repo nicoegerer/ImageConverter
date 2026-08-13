@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using ImageConverter.App.Controls;
@@ -43,9 +44,17 @@ public sealed partial class MainWindow : Window
 
     private readonly RenameService _renamer = new RenameService();
 
+    private readonly GitHubUpdateService _updateService = new GitHubUpdateService();
+
     private readonly List<ExportResultViewModel> _lastResults = new List<ExportResultViewModel>();
 
     private CancellationTokenSource? _operationCancellation;
+
+    private CancellationTokenSource? _estimateCancellation;
+
+    private UpdateRelease? _availableUpdate;
+
+    private DateTimeOffset? _lastUpdateCheckUtc;
 
     private bool _updatingControls = true;
 
@@ -101,22 +110,23 @@ public sealed partial class MainWindow : Window
     {
         PresetCombo.ItemsSource = ExportProfile.BuiltIn;
         PresetCombo.DisplayMemberPath = "Name";
-        ModeCombo.ItemsSource = new NamedOption<TransformationMode>[6]
+        ModeCombo.ItemsSource = new NamedOption<TransformationMode>[4]
         {
-            new NamedOption<TransformationMode>("Crop / Cover – exakte Zielgröße", TransformationMode.CropCover),
-            new NamedOption<TransformationMode>("Resize – Seitenverhältnis erhalten", TransformationMode.ResizeKeepAspect),
-            new NamedOption<TransformationMode>("Frei skalieren – exakte Breite und Höhe", TransformationMode.ResizeStretch),
-            new NamedOption<TransformationMode>("Fit / Contain – nichts abschneiden", TransformationMode.FitContain),
-            new NamedOption<TransformationMode>("Nur Dateiformat ändern", TransformationMode.FormatOnly),
-            new NamedOption<TransformationMode>("Originalgröße behalten", TransformationMode.OriginalSize)
+            new NamedOption<TransformationMode>("Originalgröße – nur Format und Dateigröße ändern", TransformationMode.OriginalSize),
+            new NamedOption<TransformationMode>("Einpassen – komplettes Bild, maximale Größe", TransformationMode.ResizeKeepAspect),
+            new NamedOption<TransformationMode>("Zuschneiden – exakte Zielgröße", TransformationMode.CropCover),
+            new NamedOption<TransformationMode>("Strecken – exakte Größe (kann verzerren)", TransformationMode.ResizeStretch)
         };
         ModeCombo.DisplayMemberPath = "Label";
-        FormatCombo.ItemsSource = new NamedOption<OutputImageFormat>[4]
+        FormatCombo.ItemsSource = new NamedOption<OutputImageFormat>[7]
         {
             new NamedOption<OutputImageFormat>("WebP", OutputImageFormat.WebP),
             new NamedOption<OutputImageFormat>("JPEG", OutputImageFormat.Jpeg),
             new NamedOption<OutputImageFormat>("PNG", OutputImageFormat.Png),
-            new NamedOption<OutputImageFormat>("AVIF", OutputImageFormat.Avif)
+            new NamedOption<OutputImageFormat>("AVIF", OutputImageFormat.Avif),
+            new NamedOption<OutputImageFormat>("TIFF", OutputImageFormat.Tiff),
+            new NamedOption<OutputImageFormat>("BMP", OutputImageFormat.Bmp),
+            new NamedOption<OutputImageFormat>("GIF", OutputImageFormat.Gif)
         };
         FormatCombo.DisplayMemberPath = "Label";
         MetadataCombo.ItemsSource = new NamedOption<MetadataMode>[4]
@@ -127,6 +137,13 @@ public sealed partial class MainWindow : Window
             new NamedOption<MetadataMode>("Alles entfernen", MetadataMode.RemoveAll)
         };
         MetadataCombo.DisplayMemberPath = "Label";
+        TransparencyCombo.ItemsSource = new NamedOption<TransparencyMode>[3]
+        {
+            new NamedOption<TransparencyMode>("Transparenz behalten", TransparencyMode.Preserve),
+            new NamedOption<TransparencyMode>("Auf weißem Hintergrund", TransparencyMode.White),
+            new NamedOption<TransparencyMode>("Auf schwarzem Hintergrund", TransparencyMode.Black)
+        };
+        TransparencyCombo.DisplayMemberPath = "Label";
         NamingModeCombo.ItemsSource = new NamedOption<NamingMode>[2]
         {
             new NamedOption<NamingMode>("Originalname beibehalten", NamingMode.KeepOriginal),
@@ -145,10 +162,11 @@ public sealed partial class MainWindow : Window
         ThemeCombo.ItemsSource = new string[3] { "System", "Light", "Dark" };
         _updatingControls = true;
         TopNavigation.SelectedItem = TopNavigation.MenuItems[0];
-        PresetCombo.SelectedIndex = 0;
-        ModeCombo.SelectedIndex = 0;
-        FormatCombo.SelectedIndex = (int)settings.LastOutputFormat;
-        MetadataCombo.SelectedIndex = 2;
+        PresetCombo.SelectedIndex = -1;
+        SelectOption(ModeCombo, NormalizeMode(settings.LastTransformationMode));
+        SelectOption(FormatCombo, settings.LastOutputFormat);
+        SelectOption(MetadataCombo, settings.LastMetadataMode);
+        SelectOption(TransparencyCombo, settings.LastTransparencyMode);
         NamingModeCombo.SelectedIndex = 1;
         RenameSortCombo.SelectedIndex = 0;
         ThemeCombo.SelectedItem = settings.Theme;
@@ -163,14 +181,29 @@ public sealed partial class MainWindow : Window
         NamingLengthBox.Value = settings.NamingNumberLength;
         RenameLengthBox.Value = settings.NamingNumberLength;
         ParallelismBox.Value = settings.ExportParallelism;
+        RestoreSessionToggle.IsOn = settings.RestoreLastSession;
+        AutoUpdateToggle.IsOn = settings.CheckForUpdates;
         _destinationFolder = settings.LastDestinationFolder;
         _lastSourceFolder = settings.LastSourceFolder;
+        _lastUpdateCheckUtc = settings.LastUpdateCheckUtc;
         DestinationBox.Text = _destinationFolder ?? "Noch nicht gewählt";
         _lockedAspect = WidthBox.Value / HeightBox.Value;
         _updatingControls = false;
         ApplyTheme(settings.Theme);
-        ApplyPreset(ExportProfile.BuiltIn[0], preserveStoredFormatAndQuality: true);
+        CurrentVersionText.Text = "v" + CurrentVersion().ToString(3);
+        UpdateModeVisibility();
+        UpdateFormatGuidance();
         UpdateSummary();
+    }
+
+    private static TransformationMode NormalizeMode(TransformationMode mode)
+    {
+        return mode switch
+        {
+            TransformationMode.FormatOnly => TransformationMode.OriginalSize,
+            TransformationMode.FitContain => TransformationMode.ResizeKeepAspect,
+            _ => mode
+        };
     }
 
     private async void OnAddFilesClick(object sender, RoutedEventArgs e)
@@ -312,9 +345,51 @@ public sealed partial class MainWindow : Window
         ApplyResponsiveLayout(args.NewSize.Width);
     }
 
-    private void OnRootGridLoaded(object sender, RoutedEventArgs args)
+    private async void OnRootGridLoaded(object sender, RoutedEventArgs args)
     {
         ApplyResponsiveLayout(RootGrid.ActualWidth);
+        RootGrid.Loaded -= OnRootGridLoaded;
+        if (RestoreSessionToggle.IsOn && Images.Count == 0)
+        {
+            await RestoreLastSessionAsync();
+        }
+        if (AutoUpdateToggle.IsOn)
+        {
+            await CheckForUpdatesAsync(showNoUpdateMessage: false);
+        }
+    }
+
+    private async Task RestoreLastSessionAsync()
+    {
+        SessionImageState[] session = _initialSettings.SessionImages
+            .Where(item => File.Exists(item.Path))
+            .ToArray();
+        if (session.Length == 0)
+        {
+            return;
+        }
+
+        await ImportPathsAsync(session.Select(item => item.Path));
+        Dictionary<string, SessionImageState> states = session.ToDictionary(item => Path.GetFullPath(item.Path), StringComparer.OrdinalIgnoreCase);
+        foreach (ImageAssetViewModel image in Images)
+        {
+            if (states.TryGetValue(image.File.Path, out SessionImageState? state))
+            {
+                image.RestoreCrop(state.Crop);
+                image.IsSelected = state.IsSelected;
+                image.LastExportText = state.LastExportText;
+            }
+        }
+
+        ImageAssetViewModel? selected = Images.FirstOrDefault(image => string.Equals(image.File.Path, _initialSettings.SelectedImagePath, StringComparison.OrdinalIgnoreCase))
+            ?? Images.FirstOrDefault();
+        if (selected is not null)
+        {
+            ImageList.SelectedItem = selected;
+            ShowAsset(selected);
+        }
+        UpdateSelectionCount();
+        SetStatus($"Letzte Sitzung wiederhergestellt · {Images.Count} Bild(er)");
     }
 
     private void ApplyResponsiveLayout(double windowWidth)
@@ -370,6 +445,8 @@ public sealed partial class MainWindow : Window
         ToolTipService.SetToolTip(PreviewTitle, asset.FileName);
         PreviewSubtitle.Text = asset.MetadataLine + " · Original " + asset.FileSizeText;
         OriginalSizeText.Text = asset.FileSizeText;
+        OriginalDimensionsText.Text = $"{asset.File.Width:N0} × {asset.File.Height:N0} Pixel";
+        OriginalAspectText.Text = FormatRatio((int)asset.File.Width, (int)asset.File.Height);
         SyncZoomSliderToCurrentCrop();
         UpdateSummary();
     }
@@ -384,21 +461,6 @@ public sealed partial class MainWindow : Window
         ExportScroll.Visibility = isUtilityPage ? Visibility.Collapsed : Visibility.Visible;
         RenameScroll.Visibility = ((!(text == "rename")) ? Visibility.Collapsed : Visibility.Visible);
         SettingsScroll.Visibility = ((!(text == "settings")) ? Visibility.Collapsed : Visibility.Visible);
-        if (!_updatingControls)
-        {
-            switch (text)
-            {
-                case "convert":
-                    SelectOption(ModeCombo, TransformationMode.FormatOnly);
-                    break;
-                case "optimize":
-                    SelectOption(ModeCombo, TransformationMode.ResizeKeepAspect);
-                    break;
-                case "crop":
-                    SelectOption(ModeCombo, TransformationMode.CropCover);
-                    break;
-            }
-        }
     }
 
     private static void SelectOption<T>(ComboBox comboBox, T value) where T : struct, Enum
@@ -439,6 +501,7 @@ public sealed partial class MainWindow : Window
     {
         if (!_updatingControls)
         {
+            PresetCombo.SelectedIndex = -1;
             UpdateModeVisibility();
             AdaptAllCropsToTarget();
             UpdateSummary();
@@ -450,13 +513,23 @@ public sealed partial class MainWindow : Window
         TransformationMode transformationMode = CurrentMode();
         bool hasTargetSize = transformationMode is not TransformationMode.FormatOnly and not TransformationMode.OriginalSize;
         bool hasExactDimensions = transformationMode is TransformationMode.CropCover or TransformationMode.ResizeStretch;
-        WidthBox.IsEnabled = hasTargetSize;
-        HeightBox.IsEnabled = hasTargetSize;
+        SizeFields.Visibility = hasTargetSize ? Visibility.Visible : Visibility.Collapsed;
         AspectLockCheck.IsEnabled = hasTargetSize && !hasExactDimensions;
-        AspectLockCheck.Visibility = hasExactDimensions ? Visibility.Collapsed : Visibility.Visible;
+        AspectLockCheck.Visibility = transformationMode == TransformationMode.ResizeKeepAspect ? Visibility.Visible : Visibility.Collapsed;
         CropSizeHint.Visibility = ((transformationMode != TransformationMode.CropCover) ? Visibility.Collapsed : Visibility.Visible);
-        PreventUpscaleCheck.IsEnabled = hasTargetSize;
-        CropEditor.IsEnabled = transformationMode == TransformationMode.CropCover;
+        PreventUpscaleCheck.Visibility = hasTargetSize ? Visibility.Visible : Visibility.Collapsed;
+        bool isCrop = transformationMode == TransformationMode.CropCover;
+        CropEditor.SetCropEnabled(isCrop);
+        CropToolbar.Visibility = isCrop ? Visibility.Visible : Visibility.Collapsed;
+        ZoomControls.Visibility = isCrop ? Visibility.Visible : Visibility.Collapsed;
+        ModeHelpText.Text = transformationMode switch
+        {
+            TransformationMode.OriginalSize or TransformationMode.FormatOnly => "Die Pixel bleiben unverändert. Nur Format, Qualität, Transparenz und Metadaten beeinflussen die Datei.",
+            TransformationMode.ResizeKeepAspect or TransformationMode.FitContain => "Das komplette Bild bleibt sichtbar und wird proportional in die maximale Breite und Höhe eingepasst.",
+            TransformationMode.CropCover => "Du legst exakte Zielpixel fest. Verschiebe oder vergrößere den Rahmen direkt in der Vorschau.",
+            TransformationMode.ResizeStretch => "Breite und Höhe werden exakt erzwungen. Das Bild kann dabei sichtbar verzerrt werden.",
+            _ => string.Empty
+        };
     }
 
     private void OnSizeChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
@@ -494,6 +567,7 @@ public sealed partial class MainWindow : Window
             _lockedAspect = WidthBox.Value / HeightBox.Value;
         }
 
+        PresetCombo.SelectedIndex = -1;
         AdaptAllCropsToTarget();
         UpdateSummary();
     }
@@ -503,6 +577,10 @@ public sealed partial class MainWindow : Window
         if (AspectLockCheck.IsChecked == true && WidthBox.Value > 0.0 && HeightBox.Value > 0.0)
         {
             _lockedAspect = WidthBox.Value / HeightBox.Value;
+        }
+        if (!_updatingControls)
+        {
+            PresetCombo.SelectedIndex = -1;
         }
     }
 
@@ -542,6 +620,7 @@ public sealed partial class MainWindow : Window
             _updatingControls = true;
             QualityBox.Value = Math.Round(e.NewValue);
             _updatingControls = false;
+            PresetCombo.SelectedIndex = -1;
             UpdateSummary();
         }
     }
@@ -553,6 +632,7 @@ public sealed partial class MainWindow : Window
             _updatingControls = true;
             QualitySlider.Value = Math.Clamp(args.NewValue, 1.0, 100.0);
             _updatingControls = false;
+            PresetCombo.SelectedIndex = -1;
             UpdateSummary();
         }
     }
@@ -567,7 +647,46 @@ public sealed partial class MainWindow : Window
 
     private void OnExportSettingChanged(object sender, object e)
     {
+        if (!_updatingControls && (ReferenceEquals(sender, FormatCombo)
+            || ReferenceEquals(sender, MetadataCombo)
+            || ReferenceEquals(sender, TransparencyCombo)
+            || ReferenceEquals(sender, PreventUpscaleCheck)))
+        {
+            PresetCombo.SelectedIndex = -1;
+        }
+        UpdateFormatGuidance();
         UpdateSummary();
+    }
+
+    private void UpdateFormatGuidance()
+    {
+        if (FormatCombo.SelectedItem is not NamedOption<OutputImageFormat> selected)
+        {
+            return;
+        }
+
+        FormatHelpText.Text = selected.Value switch
+        {
+            OutputImageFormat.WebP => "Empfohlen für kleine Web-Dateien. Unterstützt Transparenz und liefert meist deutlich kleinere Fotos als JPEG.",
+            OutputImageFormat.Jpeg => "Sehr kompatibel für Fotos, aber ohne Transparenz. Transparente Bereiche werden auf den gewählten Hintergrund gesetzt.",
+            OutputImageFormat.Png => "Verlustfrei und transparent, bei Fotos jedoch oft deutlich größer als WebP oder AVIF.",
+            OutputImageFormat.Avif => "Sehr kleine Dateien bei guter Qualität und Transparenz; Export und Öffnen können länger dauern.",
+            OutputImageFormat.Tiff => "Für Archivierung und Weiterbearbeitung. Hohe Qualität, gewöhnlich große Dateien.",
+            OutputImageFormat.Bmp => "Unkomprimiert und sehr groß. Nur für spezielle ältere Programme sinnvoll.",
+            OutputImageFormat.Gif => "Für einfache Grafiken mit wenigen Farben; Fotos verlieren sichtbar an Qualität.",
+            _ => string.Empty
+        };
+        bool supportsAlpha = selected.Value is OutputImageFormat.WebP or OutputImageFormat.Png
+            or OutputImageFormat.Avif or OutputImageFormat.Tiff or OutputImageFormat.Gif;
+        bool usesQuality = selected.Value is OutputImageFormat.WebP or OutputImageFormat.Jpeg or OutputImageFormat.Avif;
+        QualityLabelText.Text = usesQuality ? "Qualität" : "Qualität (für dieses Format nicht nötig)";
+        QualityBox.IsEnabled = usesQuality;
+        QualitySlider.IsEnabled = usesQuality;
+        QualityPresetPanel.IsHitTestVisible = usesQuality;
+        QualityPresetPanel.Opacity = usesQuality ? 1.0 : 0.45;
+        TransparencyHelpText.Text = supportsAlpha
+            ? "Bei ‚Transparenz behalten‘ bleiben durchsichtige Bereiche erhalten. Weiß oder Schwarz entfernt die Transparenz bewusst."
+            : "Dieses Format unterstützt hier keine verlässliche Transparenz; transparente Bereiche werden auf Weiß oder Schwarz gesetzt.";
     }
 
     private void OnNamingModeChanged(object sender, SelectionChangedEventArgs e)
@@ -620,6 +739,16 @@ public sealed partial class MainWindow : Window
     private async void OnExportSelectedClick(object sender, RoutedEventArgs e)
     {
         await StartExportAsync(Images.Where((ImageAssetViewModel x) => x.IsSelected).ToArray());
+    }
+
+    private async void OnExportCurrentClick(object sender, RoutedEventArgs e)
+    {
+        if (CurrentAsset is null)
+        {
+            await ShowMessageAsync("Kein Bild geöffnet", "Wähle links zuerst das Bild aus, das du exportieren möchtest.");
+            return;
+        }
+        await StartExportAsync([CurrentAsset]);
     }
 
     private async void OnExportAllClick(object sender, RoutedEventArgs e)
@@ -816,6 +945,105 @@ public sealed partial class MainWindow : Window
         rootGrid.RequestedTheme = requestedTheme;
     }
 
+    private async void OnCheckUpdateClick(object sender, RoutedEventArgs e)
+    {
+        await CheckForUpdatesAsync(showNoUpdateMessage: true);
+    }
+
+    private async Task CheckForUpdatesAsync(bool showNoUpdateMessage)
+    {
+        try
+        {
+            SetBusy(busy: true, "Suche nach Updates …");
+            _lastUpdateCheckUtc = DateTimeOffset.UtcNow;
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            _availableUpdate = await _updateService.CheckForUpdateAsync(CurrentVersion(), timeout.Token);
+            if (_availableUpdate is null)
+            {
+                UpdateInfoBar.IsOpen = false;
+                SetStatus("Image Converter ist aktuell.");
+                if (showNoUpdateMessage)
+                {
+                    await ShowMessageAsync("Kein Update verfügbar", $"Du verwendest bereits Version {CurrentVersion().ToString(3)}.");
+                }
+                return;
+            }
+
+            UpdateInfoText.Text = $"Version {_availableUpdate.Version.ToString(3)} kann direkt heruntergeladen und installiert werden.";
+            UpdateInfoBar.IsOpen = true;
+            SetStatus($"Update {_availableUpdate.Version.ToString(3)} verfügbar.");
+        }
+        catch (Exception exception)
+        {
+            App.Logger.Error("Update.Check", exception);
+            SetStatus("Update-Prüfung war nicht möglich.");
+            if (showNoUpdateMessage)
+            {
+                await ShowMessageAsync("Update-Prüfung fehlgeschlagen", "GitHub konnte gerade nicht erreicht werden. Prüfe deine Internetverbindung und versuche es später erneut.");
+            }
+        }
+        finally
+        {
+            SetBusy(busy: false);
+        }
+    }
+
+    private async void OnInstallUpdateClick(object sender, RoutedEventArgs e)
+    {
+        if (_availableUpdate is null)
+        {
+            await CheckForUpdatesAsync(showNoUpdateMessage: true);
+            if (_availableUpdate is null)
+            {
+                return;
+            }
+        }
+
+        if (!await ShowConfirmationAsync(
+            "Update installieren",
+            $"Version {_availableUpdate.Version.ToString(3)} wird von GitHub geladen, per SHA-256 geprüft und anschließend installiert. Image Converter wird dafür geschlossen.",
+            "Herunterladen und installieren"))
+        {
+            return;
+        }
+
+        InstallUpdateButton.IsEnabled = false;
+        ExportProgressBar.Visibility = Visibility.Visible;
+        ExportProgressBar.Value = 0;
+        SetBusy(busy: true, "Update wird heruntergeladen …");
+        try
+        {
+            var progress = new Progress<double>(value =>
+            {
+                ExportProgressBar.Value = value * 100.0;
+                SetStatus($"Update wird heruntergeladen · {value:P0}");
+            });
+            string installer = await _updateService.DownloadInstallerAsync(_availableUpdate, progress);
+            var startInfo = new ProcessStartInfo(installer)
+            {
+                UseShellExecute = true
+            };
+            startInfo.ArgumentList.Add("/CURRENTUSER");
+            startInfo.ArgumentList.Add("/SILENT");
+            startInfo.ArgumentList.Add("/CLOSEAPPLICATIONS");
+            Process.Start(startInfo);
+            Close();
+        }
+        catch (Exception exception)
+        {
+            App.Logger.Error("Update.Install", exception);
+            await ShowMessageAsync("Update konnte nicht installiert werden", exception.Message);
+            InstallUpdateButton.IsEnabled = true;
+            ExportProgressBar.Visibility = Visibility.Collapsed;
+            SetBusy(busy: false);
+        }
+    }
+
+    private static Version CurrentVersion()
+    {
+        return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 1, 0);
+    }
+
     private void OnOpenLogsClick(object sender, RoutedEventArgs e)
     {
         OpenFolder(App.Paths.Logs);
@@ -956,23 +1184,74 @@ public sealed partial class MainWindow : Window
             ExportProfile profile = BuildProfile();
             OutputSummaryText.Text = DescribeProfile(profile);
             CropEditor.SetTarget(CurrentWidth(), CurrentHeight());
+            _estimateCancellation?.Cancel();
+            _estimateCancellation?.Dispose();
+            _estimateCancellation = null;
             if (CurrentAsset == null)
             {
                 OriginalSizeText.Text = "–";
+                OriginalDimensionsText.Text = "–";
+                OriginalAspectText.Text = "–";
+                OutputPixelText.Text = "–";
                 EstimatedSizeText.Text = "–";
                 EstimateHintText.Text = "Die tatsächliche Größe wird nach dem Export angezeigt.";
+                EstimateProgressRing.IsActive = false;
                 return;
             }
             OriginalSizeText.Text = CurrentAsset.FileSizeText;
             ExportSizeEstimate exportSizeEstimate = ExportSizeEstimator.Estimate(CurrentAsset.File, profile, CurrentAsset.Crop);
-            EstimatedSizeText.Text = "≈ " + ImageAssetViewModel.FormatBytes(exportSizeEstimate.LowerBytes) + "–" + ImageAssetViewModel.FormatBytes(exportSizeEstimate.UpperBytes);
-            EstimateHintText.Text = (exportSizeEstimate.IsUpscaling ? $"Hochskalierung auf {exportSizeEstimate.OutputWidth:N0} × {exportSizeEstimate.OutputHeight:N0} ({exportSizeEstimate.UpscaleFactor:0.0}×). Dadurch kann die Exportdatei trotz Kompression größer als das Original werden." : "Schätzbereich anhand des Originalbilds; die tatsächliche Größe wird nach dem Export angezeigt.");
+            OutputPixelText.Text = $"{exportSizeEstimate.OutputWidth:N0} × {exportSizeEstimate.OutputHeight:N0}";
+            EstimatedSizeText.Text = "wird genauer berechnet …";
+            EstimateHintText.Text = exportSizeEstimate.IsUpscaling
+                ? $"Achtung: {exportSizeEstimate.UpscaleFactor:0.0}× Hochskalierung. Dadurch kann die Datei trotz Kompression größer werden."
+                : "Die Vorschau wird kurz mit denselben Einstellungen testkodiert.";
+            _estimateCancellation = new CancellationTokenSource();
+            _ = UpdateAccurateEstimateAsync(CurrentAsset, profile, _estimateCancellation.Token);
+        }
+    }
+
+    private async Task UpdateAccurateEstimateAsync(ImageAssetViewModel asset, ExportProfile profile, CancellationToken cancellationToken)
+    {
+        try
+        {
+            EstimateProgressRing.IsActive = true;
+            await Task.Delay(300, cancellationToken);
+            ExportSizeEstimate estimate = await ExportSizeEstimator.EstimateAccurateAsync(asset.File, profile, asset.Crop, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!ReferenceEquals(CurrentAsset, asset))
+            {
+                return;
+            }
+            EstimatedSizeText.Text = "≈ " + ImageAssetViewModel.FormatBytes(estimate.LowerBytes) + "–" + ImageAssetViewModel.FormatBytes(estimate.UpperBytes);
+            EstimateHintText.Text = estimate.IsUpscaling
+                ? $"Aus einer Testkodierung geschätzt · {estimate.UpscaleFactor:0.0}× Hochskalierung."
+                : "Aus einer Testkodierung der Bildvorschau geschätzt; Motivdetails können das Ergebnis noch beeinflussen.";
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            App.Logger.Error("Export.Estimate", exception, asset.File.Path);
+            ExportSizeEstimate fallback = ExportSizeEstimator.Estimate(asset.File, profile, asset.Crop);
+            EstimatedSizeText.Text = "≈ " + ImageAssetViewModel.FormatBytes(fallback.LowerBytes) + "–" + ImageAssetViewModel.FormatBytes(fallback.UpperBytes);
+            EstimateHintText.Text = "Grobe Schätzung; die Testkodierung war für dieses Bild nicht möglich.";
+        }
+        finally
+        {
+            if (_estimateCancellation?.Token == cancellationToken)
+            {
+                EstimateProgressRing.IsActive = false;
+            }
         }
     }
 
     private bool IsControlStateReady()
     {
-        if (ModeCombo.SelectedItem is NamedOption<TransformationMode> && FormatCombo.SelectedItem is NamedOption<OutputImageFormat> && MetadataCombo.SelectedItem is NamedOption<MetadataMode>)
+        if (ModeCombo.SelectedItem is NamedOption<TransformationMode>
+            && FormatCombo.SelectedItem is NamedOption<OutputImageFormat>
+            && MetadataCombo.SelectedItem is NamedOption<MetadataMode>
+            && TransparencyCombo.SelectedItem is NamedOption<TransparencyMode>)
         {
             return NamingModeCombo.SelectedItem is NamedOption<NamingMode>;
         }
@@ -991,7 +1270,8 @@ public sealed partial class MainWindow : Window
             Quality = Math.Clamp((int)Math.Round(QualitySlider.Value), 1, 100),
             PreventUpscale = (PreventUpscaleCheck.IsChecked == true),
             PreserveAspectRatio = (AspectLockCheck.IsChecked == true),
-            Metadata = ((NamedOption<MetadataMode>)MetadataCombo.SelectedItem).Value
+            Metadata = ((NamedOption<MetadataMode>)MetadataCombo.SelectedItem).Value,
+            Transparency = ((NamedOption<TransparencyMode>)TransparencyCombo.SelectedItem).Value
         };
     }
 
@@ -999,7 +1279,7 @@ public sealed partial class MainWindow : Window
     {
         if (!(ModeCombo.SelectedItem is NamedOption<TransformationMode> namedOption))
         {
-            return TransformationMode.CropCover;
+            return TransformationMode.OriginalSize;
         }
         return namedOption.Value;
     }
@@ -1034,6 +1314,18 @@ public sealed partial class MainWindow : Window
         bool flag = (uint)(mode - 4) <= 1u;
         string value = (flag ? "Originalgröße" : $"{profile.Width} × {profile.Height}");
         return $"{value} · {profile.Format} {profile.Quality}";
+    }
+
+    private static string FormatRatio(int width, int height)
+    {
+        int a = Math.Abs(width);
+        int b = Math.Abs(height);
+        while (b != 0)
+        {
+            (a, b) = (b, a % b);
+        }
+        int divisor = Math.Max(1, a);
+        return $"{width / divisor}:{height / divisor}";
     }
 
     private void SetBusy(bool busy, string? text = null)
@@ -1116,6 +1408,7 @@ public sealed partial class MainWindow : Window
     private async void OnWindowClosed(object sender, WindowEventArgs args)
     {
         _operationCancellation?.Cancel();
+        _estimateCancellation?.Cancel();
         try
         {
             AppSettings settings = new AppSettings
@@ -1124,13 +1417,29 @@ public sealed partial class MainWindow : Window
                 LastSourceFolder = _lastSourceFolder,
                 LastDestinationFolder = _destinationFolder,
                 LastOutputFormat = ((FormatCombo.SelectedItem is NamedOption<OutputImageFormat> namedOption) ? namedOption.Value : OutputImageFormat.WebP),
+                LastTransformationMode = CurrentMode(),
+                LastTransparencyMode = ((TransparencyCombo.SelectedItem is NamedOption<TransparencyMode> transparency) ? transparency.Value : TransparencyMode.Preserve),
+                LastMetadataMode = ((MetadataCombo.SelectedItem is NamedOption<MetadataMode> metadata) ? metadata.Value : MetadataMode.RemoveAll),
                 LastQuality = (int)Math.Round(QualitySlider.Value),
                 LastWidth = CurrentWidth(),
                 LastHeight = CurrentHeight(),
                 NamingPrefix = NamingPrefixBox.Text,
                 NamingStartNumber = (int)NamingStartBox.Value,
                 NamingNumberLength = (int)NamingLengthBox.Value,
-                ExportParallelism = (int)ParallelismBox.Value
+                ExportParallelism = (int)ParallelismBox.Value,
+                RestoreLastSession = RestoreSessionToggle.IsOn,
+                CheckForUpdates = AutoUpdateToggle.IsOn,
+                LastUpdateCheckUtc = _lastUpdateCheckUtc,
+                SelectedImagePath = CurrentAsset?.File.Path,
+                SessionImages = RestoreSessionToggle.IsOn
+                    ? Images.Select(image => new SessionImageState
+                    {
+                        Path = image.File.Path,
+                        Crop = image.Crop,
+                        IsSelected = image.IsSelected,
+                        LastExportText = image.LastExportText
+                    }).ToList()
+                    : []
             };
             await App.Settings.SaveAsync(settings);
         }

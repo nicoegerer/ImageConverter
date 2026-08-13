@@ -15,6 +15,7 @@
                     <SolidColorBrush x:Key="AppAccentBrush" Color="#C15BD5" />
                     <SolidColorBrush x:Key="AppAccentTextBrush" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="AppSuccessBrush" Color="#6CCB7F" />
+                    <SolidColorBrush x:Key="AppSummaryBrush" Color="#35273A" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="AppBackgroundBrush" Color="#202020" />
@@ -26,6 +27,7 @@
                     <SolidColorBrush x:Key="AppAccentBrush" Color="#C15BD5" />
                     <SolidColorBrush x:Key="AppAccentTextBrush" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="AppSuccessBrush" Color="#6CCB7F" />
+                    <SolidColorBrush x:Key="AppSummaryBrush" Color="#35273A" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F3F3F3" />
@@ -37,6 +39,7 @@
                     <SolidColorBrush x:Key="AppAccentBrush" Color="#9A3DB0" />
                     <SolidColorBrush x:Key="AppAccentTextBrush" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="AppSuccessBrush" Color="#167A2D" />
+                    <SolidColorBrush x:Key="AppSummaryBrush" Color="#FBF4FC" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
             <ResourceDictionary.MergedDictionaries>
@@ -55,6 +58,20 @@
                 <Setter Property="FontSize" Value="16" />
                 <Setter Property="FontWeight" Value="SemiBold" />
                 <Setter Property="Margin" Value="0,8,0,8" />
+            </Style>
+
+            <Style x:Key="SettingsGroupStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource AppLayerBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource AppBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="9" />
+                <Setter Property="Padding" Value="12" />
+            </Style>
+
+            <Style x:Key="StepTitleStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{ThemeResource AppTextBrush}" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>
