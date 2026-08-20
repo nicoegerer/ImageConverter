@@ -25,7 +25,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260710003" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
     <ProjectReference Include="..\ImageConverter.Core\ImageConverter.Core.csproj" />
   </ItemGroup>
 
