@@ -37,13 +37,13 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-results
           path: tests/**/TestResults/*.trx
 
       - name: Upload portable build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ImageConverter-win-x64
           path: artifacts/publish
