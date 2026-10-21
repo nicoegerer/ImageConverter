@@ -32,19 +32,10 @@ jobs:
       - name: Test
         run: dotnet test tests/ImageConverter.Core.Tests/ImageConverter.Core.Tests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --logger "trx;LogFileName=tests.trx"
 
-      - name: Publish self-contained app
-        run: dotnet publish src/ImageConverter.App/ImageConverter.App.csproj -c Release -p:Platform=x64 -r win-x64 --self-contained true --no-restore -o artifacts/publish --nologo
-
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: tests/**/TestResults/*.trx
-
-      - name: Upload portable build
-        uses: actions/upload-artifact@v4
-        with:
-          name: ImageConverter-win-x64
-          path: artifacts/publish
-          if-no-files-found: error
+          retention-days: 3
