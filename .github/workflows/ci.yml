@@ -32,10 +32,3 @@ jobs:
       - name: Test
         run: dotnet test tests/ImageConverter.Core.Tests/ImageConverter.Core.Tests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --logger "trx;LogFileName=tests.trx"
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: tests/**/TestResults/*.trx
-          retention-days: 3
