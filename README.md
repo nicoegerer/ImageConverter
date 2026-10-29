@@ -1,73 +1,71 @@
 # Image Converter
 
-Image Converter ist eine lokale Windows-11-Anwendung zum Zuschneiden, Skalieren,
-Konvertieren, Optimieren und Umbenennen von Bildern. Die Oberfläche basiert auf
-WinUI 3 und ist für einen schnellen Workflow mit einzelnen Bildern und größeren
-Ordnern ausgelegt.
+Ein lokales Windows-Tool zum Verkleinern, Zuschneiden, Konvertieren und Exportieren von Bildern.
 
-Die Bildverarbeitung findet vollständig lokal statt. Die Anwendung benötigt im
-normalen Betrieb weder ein Benutzerkonto noch eine Internetverbindung.
+## Warum ich das Projekt entwickelt habe
 
-![Image Converter im Dark Mode mit geladener HEIC-Datei](docs/images/app-overview.png)
+Für meine Website [nicoegerer.de](https://nicoegerer.de) habe ich ein Tool gebraucht, mit dem ich die Dateigrößen meiner Bilder reduzieren, eigene Presets für wiederkehrende Bildformate festlegen und die fertigen Dateien exportieren kann.
+
+Dafür habe ich **Codex** genutzt und Image Converter gemeinsam mit ihm entwickelt. Die Idee und die Anforderungen kamen aus meinem eigenen Website-Workflow; Codex hat mich bei der Umsetzung unterstützt.
+
+## Vorschau
+
+![Nico Image Converter 1.1.1 mit Bildvorschau und Einstellungen für den WebP-Export](docs/images/app-overview.png)
+
+Das Beispiel zeigt ein geladenes JPEG-Bild und die Einstellungen für den Export als WebP. Größe, Zuschnitt, Ausgabeformat und Qualität lassen sich für den jeweiligen Einsatzzweck anpassen.
 
 ## Funktionen
 
-- übersichtlicher WinUI-3-Arbeitsbereich mit System-, Light- und Dark-Theme
-- Dateiliste mit Vorschau, Dateiname, Auflösung, Format und Dateigröße
-- JPG/JPEG, PNG, WebP, HEIC/HEIF, AVIF, TIFF/TIF und BMP als Eingabe
-- WebP, JPEG, PNG, AVIF, TIFF, BMP und GIF als Ausgabe
-- klar getrennte Einstellungen für Größe/Zuschnitt, Format/Kompression und Speichern
-- Originalgröße ohne versteckte Preset-Skalierung, proportional einpassen,
-  exakter Crop oder bewusstes Strecken
-- manueller Crop mit acht Ziehpunkten, Drag, Mausrad, Slider sowie
-  Pfeil-/WASD-/R-Tastatursteuerung
-- eigener, dauerhaft gespeicherter Crop-Zustand pro geladenem Bild
-- Presets für Portfolio Card (600 × 1050), Web Hero und Original → WebP
-- Qualitätsregler, optimierte WebP-Kodierung und testkodierte Dateigrößen-Schätzung
-- wahlweises Behalten von Transparenz oder weißer/schwarzer Hintergrund
-- Export des aktuellen, der ausgewählten oder aller Bilder
-- Batch-Export mit Fortschritt, Einzelergebnissen und Fehlerfortsetzung
-- Export-Namensschema und sichere automatische Kollisionsbehandlung
-- Rename-Vorschau mit Sortierung und zweiphasigem Umbenennen
-- wahlweises Behalten oder Entfernen von EXIF- und GPS-Metadaten
-- asynchrone Thumbnail-/Preview-Erzeugung und hochwertige Verarbeitung erst
-  beim Export
-- lokale Einstellungen, Diagnoseberichte und technische Logs
-- Wiederherstellung der zuletzt geöffneten Bilder, Auswahl und Zuschnitte
-- integrierte, SHA-256-geprüfte Updates über GitHub Releases
+- **Dateigröße reduzieren:** Qualität und Kompression für den Export einstellen.
+- **Zuschneiden und skalieren:** Bildausschnitt, Seitenverhältnis und Zielgröße festlegen oder die Originalgröße beibehalten.
+- **Presets nutzen:** Wiederkehrende Einstellungen schnell anwenden, zum Beispiel Portfolio Card, Web Hero oder Original → WebP.
+- **Formate konvertieren:** JPEG, PNG, WebP, HEIC/HEIF, AVIF, TIFF und BMP einlesen; unter anderem als WebP, JPEG, PNG oder AVIF exportieren.
+- **Mehrere Bilder verarbeiten:** Das aktuelle Bild, eine Auswahl oder alle geladenen Bilder exportieren.
+- **Dateien umbenennen:** Neue Dateinamen vorab prüfen und mehrere Bilder gemeinsam umbenennen.
+- **Transparenz und Metadaten steuern:** Transparenz erhalten oder einen Hintergrund wählen sowie EXIF- und GPS-Daten beim Export behalten oder entfernen.
+- **Lokal arbeiten:** Die Bildverarbeitung findet vollständig auf dem eigenen Rechner statt.
+- **Updates installieren:** Neue Versionen auf Wunsch direkt aus der App herunterladen und per SHA-256-Prüfsumme verifizieren.
 
-## Installation für Anwender
+## Installation
 
-Releases stellen `ImageConverter-Setup.exe` bereit. Der Installer installiert
-die vollständige self-contained Publish-Ausgabe pro Benutzer nach
-`%LOCALAPPDATA%\Programs\Image Converter`, legt einen Startmenü-Eintrag an und
-kann optional eine Desktop-Verknüpfung erstellen. Auf dem Zielrechner werden
-weder .NET noch Visual Studio oder Python benötigt.
+**Voraussetzung:** Windows 11 x64.
 
-Ab Version 1.1 prüft die App auf Wunsch selbst auf neue GitHub-Releases. Ein
-verfügbares Update kann direkt in der App heruntergeladen, per veröffentlichter
-SHA-256-Prüfsumme verifiziert und installiert werden.
+1. Die [aktuelle Version unter GitHub Releases](https://github.com/nicoegerer/ImageConverter/releases/latest) öffnen.
+2. Unter **Assets** die Datei **ImageConverter-Setup.exe** herunterladen.
+3. Den Installer ausführen und Image Converter anschließend über das Startmenü starten.
 
-> Hinweis: Öffentliche Builds sind erst dann vertrauenswürdig signiert, wenn die
-> Release-Pipeline mit einem Code-Signing-Zertifikat konfiguriert wurde. Die
-> Signaturprüfung oder Sicherheitssoftware sollte nicht umgangen werden.
+Der Installer installiert die Anwendung für den aktuellen Benutzer nach `%LOCALAPPDATA%\Programs\Image Converter`. Eine Desktop-Verknüpfung kann optional erstellt werden.
+
+Die Anwendung bringt ihre benötigten Laufzeitdateien mit. Für die Nutzung müssen weder .NET noch Visual Studio oder Python separat installiert werden.
 
 ## Entwicklung
 
-Voraussetzungen:
+Die Anwendung ist mit **C#, .NET 8 und WinUI 3** umgesetzt.
+
+### Voraussetzungen
 
 - Windows 11 x64
-- .NET SDK 9.0.307 oder kompatibel (das Projekt zielt auf .NET 8)
-- optional Inno Setup 6 zum Erzeugen der Setup-Datei
+- .NET SDK **9.0.307** oder eine gemäß [global.json](global.json) kompatible Version
+- Optional: **Inno Setup 6**, um den Installer zu erstellen
+
+### Projekt herunterladen
+
+```powershell
+git clone https://github.com/nicoegerer/ImageConverter.git
+cd ImageConverter
+```
+
+### Bauen und testen
 
 ```powershell
 dotnet restore ImageConverter.sln -p:Platform=x64
 dotnet build ImageConverter.sln -c Release -p:Platform=x64 --no-restore
-dotnet test tests/ImageConverter.Core.Tests/ImageConverter.Core.Tests.csproj `
-  -c Release -p:Platform=x64 --no-build --no-restore
+dotnet test tests/ImageConverter.Core.Tests/ImageConverter.Core.Tests.csproj -c Release -p:Platform=x64 --no-build --no-restore
 ```
 
-Ein vollständiger lokaler Release-Build:
+### Release erstellen
+
+Ein vollständiger Release-Build einschließlich Installer:
 
 ```powershell
 .\scripts\build-release.ps1 -Version 1.1.1
@@ -79,33 +77,28 @@ Ohne lokal installiertes Inno Setup:
 .\scripts\build-release.ps1 -Version 1.1.1 -SkipInstaller
 ```
 
-Build-Logs werden bewusst unter `%TEMP%` abgelegt und nicht als Publish-Inhalt
-gebündelt. Der Installer kopiert den kompletten Ordner `artifacts\publish` und
-nicht lediglich die AppHost-EXE.
+Die Versionsnummer kann für einen neuen Release angepasst werden. Die Programmdateien liegen anschließend unter `artifacts\publish`, die Release-Dateien unter `artifacts\release`.
 
-## Projektstruktur
+### Projektstruktur
 
 ```text
-src/ImageConverter.App/        WinUI-3-Oberfläche und ViewModels
-src/ImageConverter.Core/       Modelle und lokale Anwendungsdienste
-tests/ImageConverter.Core.Tests/ automatisierte Unit- und Integrationstests
-installer/                     Inno-Setup-Definition
-scripts/                       reproduzierbarer Release-Build
-docs/                          Architektur- und Testdokumentation
-.github/workflows/             CI- und Release-Pipeline
+src/ImageConverter.App/          WinUI-3-Oberfläche und ViewModels
+src/ImageConverter.Core/         Modelle und lokale Anwendungsdienste
+tests/ImageConverter.Core.Tests/ Automatisierte Tests
+installer/                      Inno-Setup-Definition
+scripts/                        Release-Build
+docs/                           Architektur- und Testdokumentation
+.github/workflows/              CI- und Release-Pipeline
 ```
 
-Weitere Details stehen in [Architektur](docs/ARCHITECTURE.md),
-[Tests](docs/TESTING.md) und [Beitragen](CONTRIBUTING.md).
+Weitere Informationen: [Architektur](docs/ARCHITECTURE.md) · [Tests](docs/TESTING.md) · [Beitragen](CONTRIBUTING.md)
 
 ## Datenschutz und Sicherheit
 
-Bilddateien verlassen die Anwendung nicht. Für Website-Exporte wird das
-Entfernen von GPS-Daten empfohlen. Sicherheitsprobleme bitte gemäß
-[SECURITY.md](SECURITY.md) melden.
+Bilder werden lokal verarbeitet und für die Bearbeitung nicht auf einen Server hochgeladen. Im normalen Betrieb sind weder ein Benutzerkonto noch eine Internetverbindung erforderlich; für die Update-Funktion wird GitHub kontaktiert.
+
+Sicherheitsprobleme können gemäß [SECURITY.md](SECURITY.md) gemeldet werden.
 
 ## Lizenz
 
-Der eigene Quellcode steht unter der [MIT-Lizenz](LICENSE). Abhängigkeiten und
-deren Lizenzhinweise sind in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)
-und im Ordner `licenses` dokumentiert.
+Der eigene Quellcode steht unter der [MIT-Lizenz](LICENSE). Hinweise zu den verwendeten Abhängigkeiten stehen in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
